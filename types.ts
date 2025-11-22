@@ -18,7 +18,8 @@ export interface GameState {
   last_options: string[]; // To track the last generated options for number selection
   // Cache for overlays
   cache_indices: OmniResponse | null;
-  cache_personnages: OmniResponse | null;
+  cache_personnages: OmniResponse | null; // Now specifically for NPCs (PNJ)
+  cache_joueurs: OmniResponse | null; // New for PCs (PJ)
 }
 
 // Markdown Content
@@ -37,7 +38,8 @@ export type ResponseType =
   | 'CLUE_DROPS' 
   | 'RAIL_BRIDGES'
   | 'TURN_RESULT'
-  | 'CHARACTERS_LIST';
+  | 'CHARACTERS_LIST'
+  | 'PLAYERS_LIST';
 
 export interface BaseResponse {
   type: ResponseType;
@@ -91,6 +93,18 @@ export interface CharactersListResponse extends BaseResponse {
     characters: { name: string; role: string; trait: string }[];
 }
 
+export interface PlayersListResponse extends BaseResponse {
+    type: 'PLAYERS_LIST';
+    players: { 
+        name: string; 
+        mutation: string; 
+        society: string;
+        society_goal: string;
+        personal_goal: string;
+        description_short: string;
+    }[];
+}
+
 // New Combined Response for the Game Loop
 export interface TurnResultResponse extends BaseResponse {
   type: 'TURN_RESULT';
@@ -108,4 +122,5 @@ export type OmniResponse =
   | ClueDropsResponse 
   | RailBridgesResponse
   | TurnResultResponse
-  | CharactersListResponse;
+  | CharactersListResponse
+  | PlayersListResponse;

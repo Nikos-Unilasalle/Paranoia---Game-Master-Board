@@ -13,7 +13,7 @@ const INITIAL_CLOCKS: GameClock[] = [
   { id: 'ressources', name: 'RESSOURCES', current: 5, max: 5 },
 ];
 
-type ViewMode = 'TERMINAL' | 'INDICES' | 'PERSONNAGES';
+type ViewMode = 'TERMINAL' | 'INDICES' | 'PNJ' | 'PJ';
 
 const App: React.FC = () => {
   // --- State ---
@@ -29,6 +29,7 @@ const App: React.FC = () => {
     last_options: [],
     cache_indices: null,
     cache_personnages: null,
+    cache_joueurs: null,
   });
   
   const [history, setHistory] = useState<OmniResponse[]>([]);
@@ -95,6 +96,9 @@ const App: React.FC = () => {
       if (response.type === 'CHARACTERS_LIST') {
           setGameState(prev => ({ ...prev, cache_personnages: response }));
       }
+      if (response.type === 'PLAYERS_LIST') {
+          setGameState(prev => ({ ...prev, cache_joueurs: response }));
+      }
   };
 
   const executePrompt = async (intent: string, query: string, hidden: boolean = false) => {
@@ -107,6 +111,7 @@ const App: React.FC = () => {
           // For hidden fetches (like refreshing cache without showing in terminal)
           if (response.type === 'CLUE_DROPS') setGameState(prev => ({...prev, cache_indices: response}));
           if (response.type === 'CHARACTERS_LIST') setGameState(prev => ({...prev, cache_personnages: response}));
+          if (response.type === 'PLAYERS_LIST') setGameState(prev => ({...prev, cache_joueurs: response}));
       }
       
       // Update Action Log
@@ -146,6 +151,63 @@ const App: React.FC = () => {
       setCustomQuery("");
   };
 
+  // --- Export Logic ---
+  const downloadHistory = () => {
+    if (history.length === 0) return;
+
+    const generateText = () => {
+        let output = `PARANOIA GM BOARD - SESSION LOG\nRUN ID: ${gameState.run_id}\nDATE: ${new Date().toLocaleString()}\n----------------------------------------\n\n`;
+        
+        history.forEach((entry, i) => {
+            const time = entry.timestamp ? new Date(entry.timestamp).toLocaleTimeString() : 'Unknown Time';
+            output += `[${time}] TYPE: ${entry.type}\n`;
+            
+            if ('title' in entry) output += `TITRE: ${entry.title}\n`;
+            if ('scene' in entry) output += `SCÈNE: ${entry.scene}\n`;
+            if ('trigger' in entry) output += `DÉCLENCHEUR: ${entry.trigger}\n`;
+            if ('prompt' in entry) output += `PROMPT: ${entry.prompt}\n`;
+
+            output += `CONTENU:\n`;
+            
+            if ('bullets' in entry) {
+                entry.bullets.forEach(b => output += ` - ${b}\n`);
+            }
+            if ('choices' in entry) {
+                entry.choices.forEach((c, idx) => output += ` ${idx + 1}. ${c}\n`);
+            }
+            if ('consequences' in entry) {
+                output += ` > CONSÉQUENCES:\n`;
+                entry.consequences.forEach(c => output += `   * ${c}\n`);
+                output += ` > NOUVELLES OPTIONS:\n`;
+                entry.new_options.forEach((o, idx) => output += `   ${idx + 1}. ${o}\n`);
+            }
+            if ('players' in entry) {
+                entry.players.forEach(p => output += ` - ${p.name} [${p.society}]\n`);
+            }
+            if ('characters' in entry) {
+                entry.characters.forEach(c => output += ` - ${c.name} (${c.role})\n`);
+            }
+            if ('bridges' in entry) {
+                output += ` > FROM: ${entry.from} TO ${entry.to}\n`;
+                entry.bridges.forEach(b => output += ` - ${b}\n`);
+            }
+
+            output += `\n----------------------------------------\n\n`;
+        });
+        return output;
+    };
+
+    const blob = new Blob([generateText()], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `paranoia_session_${new Date().toISOString().slice(0,10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   // --- Overlay Handlers ---
   
   const toggleIndices = () => {
@@ -154,32 +216,53 @@ const App: React.FC = () => {
       } else {
           setViewMode('INDICES');
           if (!gameState.cache_indices) {
-              executePrompt("CLUE_DROPS", "Liste les indices disponibles pour cette étape.", true);
+              // Mise à jour critique : demande explicite de croiser scénario et secrets des PJ
+              executePrompt(
+                  "CLUE_DROPS", 
+                  "Liste les indices pour cette étape. IMPORTANT : Inclus des indices vitaux pour le scénario, MAIS AUSSI des indices qui éveillent la suspicion sur les PJ (en rapport avec leurs sociétés secrètes ou missions) et des fausses pistes.", 
+                  true
+              );
           }
       }
   };
 
-  const togglePersonnages = () => {
-      if (viewMode === 'PERSONNAGES') {
+  const togglePNJ = () => {
+      if (viewMode === 'PNJ') {
           setViewMode('TERMINAL');
       } else {
-          setViewMode('PERSONNAGES');
+          setViewMode('PNJ');
           if (!gameState.cache_personnages) {
-              executePrompt("CHARACTERS_LIST", "Liste les PNJ importants avec leur rôle et un trait de caractère.", true);
+              executePrompt("CHARACTERS_LIST", "Liste les PNJ (Non-Joueurs) importants pour l'histoire, en excluant les joueurs.", true);
+          }
+      }
+  };
+
+  const togglePJ = () => {
+      if (viewMode === 'PJ') {
+          setViewMode('TERMINAL');
+      } else {
+          setViewMode('PJ');
+          if (!gameState.cache_joueurs) {
+              executePrompt("PLAYERS_LIST", "Analyse le fichier des personnages joueurs (ex: 03_personnages_joueurs.md) et liste tous les PJ avec leurs mutations, sociétés et objectifs.", true);
           }
       }
   };
 
   const handleStepSelect = (step: string) => {
-      setGameState(prev => ({ ...prev, etape_active: step }));
+      setGameState(prev => ({ ...prev, etape_active: step, cache_indices: null }));
+      
       // Announce step change in terminal
       addToHistory({
           type: 'COMPUTER_MESSAGE',
-          bullets: [`CHANGEMENT D'ÉTAPE: ${step}`, "CONTEXTE MIS À JOUR"],
+          bullets: [`INITIALISATION ÉTAPE: ${step}`, "CHARGEMENT DU BRIEF..."],
           sources: ["SYSTEM"]
       });
-      // Refresh caches potentially? Let's keep them for now, maybe clear them to force refresh
-      setGameState(prev => ({ ...prev, cache_indices: null })); 
+
+      // Automatically trigger a Player Facing description (Intro)
+      executePrompt(
+          "PLAYER_FACING", 
+          `Nous débutons l'étape: "${step}". Génère une description d'introduction immersive (PLAYER_FACING) à lire aux joueurs pour planter le décor et la situation initiale de cette étape.`
+      );
   };
 
 
@@ -272,7 +355,9 @@ const App: React.FC = () => {
                     )}
                 </div>
 
-                {/* OVERLAYS (Indices / Personnages) */}
+                {/* OVERLAYS */}
+                
+                {/* INDICES */}
                 {viewMode === 'INDICES' && (
                      <div className="absolute inset-4 border-2 border-amber-500 bg-black z-10 flex flex-col shadow-lg shadow-black/80">
                          <div className="bg-amber-500 text-black px-2 py-1 font-bold flex justify-between items-center">
@@ -290,10 +375,11 @@ const App: React.FC = () => {
                      </div>
                 )}
 
-                 {viewMode === 'PERSONNAGES' && (
+                {/* PNJ (NPCs) */}
+                 {viewMode === 'PNJ' && (
                      <div className="absolute inset-4 border-2 border-amber-500 bg-black z-10 flex flex-col shadow-lg shadow-black/80">
                          <div className="bg-amber-500 text-black px-2 py-1 font-bold flex justify-between items-center">
-                             <span>REGISTRE DES PERSONNAGES</span>
+                             <span>REGISTRE DES PNJ (NON-JOUEURS)</span>
                              <button onClick={() => setViewMode('TERMINAL')} className="hover:bg-black hover:text-amber-500 px-2">X</button>
                          </div>
                          <div className="p-4 overflow-y-auto flex-1">
@@ -302,7 +388,25 @@ const App: React.FC = () => {
                              ) : (
                                  <div className="text-center mt-10 animate-pulse">RECHERCHE DANS LA BASE DE DONNÉES...</div>
                              )}
-                             <button onClick={() => executePrompt("CHARACTERS_LIST", "Force refresh persos", true)} className="mt-4 border border-amber-900 text-xs px-2 py-1 hover:bg-amber-900/20">FORCER L'ACTUALISATION</button>
+                             <button onClick={() => executePrompt("CHARACTERS_LIST", "Force refresh PNJ", true)} className="mt-4 border border-amber-900 text-xs px-2 py-1 hover:bg-amber-900/20">FORCER L'ACTUALISATION</button>
+                         </div>
+                     </div>
+                )}
+
+                {/* PJ (PCs) */}
+                {viewMode === 'PJ' && (
+                     <div className="absolute inset-4 border-2 border-amber-500 bg-black z-10 flex flex-col shadow-lg shadow-black/80">
+                         <div className="bg-amber-500 text-black px-2 py-1 font-bold flex justify-between items-center">
+                             <span>REGISTRE DES PJ (JOUEURS)</span>
+                             <button onClick={() => setViewMode('TERMINAL')} className="hover:bg-black hover:text-amber-500 px-2">X</button>
+                         </div>
+                         <div className="p-4 overflow-y-auto flex-1">
+                             {gameState.cache_joueurs ? (
+                                 <ResponseCard data={gameState.cache_joueurs} isPlayerMode={isPlayerMode} />
+                             ) : (
+                                 <div className="text-center mt-10 animate-pulse">ANALYSE DES PROFILS JOUEURS...</div>
+                             )}
+                             <button onClick={() => executePrompt("PLAYERS_LIST", "Force refresh PJ", true)} className="mt-4 border border-amber-900 text-xs px-2 py-1 hover:bg-amber-900/20">FORCER L'ACTUALISATION</button>
                          </div>
                      </div>
                 )}
@@ -318,8 +422,11 @@ const App: React.FC = () => {
                     <button onClick={toggleIndices} className={`px-4 py-2 text-xs font-bold uppercase border-r border-amber-900/50 hover:bg-amber-900/20 ${viewMode === 'INDICES' ? 'bg-amber-500 text-black' : 'text-amber-500/70'}`}>
                         INDICES (REF)
                     </button>
-                    <button onClick={togglePersonnages} className={`px-4 py-2 text-xs font-bold uppercase hover:bg-amber-900/20 ${viewMode === 'PERSONNAGES' ? 'bg-amber-500 text-black' : 'text-amber-500/70'}`}>
-                        PERSONNAGES (REF)
+                    <button onClick={togglePNJ} className={`px-4 py-2 text-xs font-bold uppercase border-r border-amber-900/50 hover:bg-amber-900/20 ${viewMode === 'PNJ' ? 'bg-amber-500 text-black' : 'text-amber-500/70'}`}>
+                        PNJ (REF)
+                    </button>
+                    <button onClick={togglePJ} className={`px-4 py-2 text-xs font-bold uppercase hover:bg-amber-900/20 ${viewMode === 'PJ' ? 'bg-amber-500 text-black' : 'text-amber-500/70'}`}>
+                        PJ (REF)
                     </button>
                 </div>
 
@@ -363,6 +470,8 @@ const App: React.FC = () => {
                  <div className="bg-amber-900/20 p-1 text-[10px] text-center mb-2 opacity-60">OUTILS MJ</div>
                  <RetroButton onClick={() => executePrompt("GM_BRIEF", "Brief rapide de la situation.")} label="BRIEF SCÈNE" />
                  <RetroButton onClick={() => executePrompt("RAIL_BRIDGES", "3 moyens de ramener les joueurs sur le scénario.")} label="PONTS NARRATIFS" />
+                 <div className="my-2 border-t border-amber-900/50"></div>
+                 <RetroButton onClick={downloadHistory} label="SAUVEGARDER LOGS" />
             </div>
         </aside>
 
