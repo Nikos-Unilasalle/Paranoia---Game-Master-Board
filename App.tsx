@@ -189,7 +189,7 @@ const App: React.FC = () => {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-black p-4 font-mono">
         <div className="border-retro p-8 max-w-2xl w-full text-center">
-            <h1 className="text-base font-bold mb-4 text-glow">>> OMNIGM_TERMINAL_V2.0</h1>
+            <h1 className="text-base font-bold mb-4 text-glow">>> PARANOIA_GM_BOARD_V2.0</h1>
             <p className="mb-8 opacity-80">INITIALISATION... VEUILLEZ CHARGER LE SCÉNARIO.</p>
             <MarkdownUploader onUpload={setFiles} />
         </div>
@@ -203,7 +203,7 @@ const App: React.FC = () => {
       {/* HEADER */}
       <header className="h-8 border-retro flex items-center justify-between px-3 shrink-0 bg-gray-900 select-none">
         <div className="flex items-center gap-4 text-xs">
-            <span className="font-bold text-glow">OMNIGM_TERM_V2</span>
+            <span className="font-bold text-glow">PARANOIA_GM_BOARD</span>
             <span className="opacity-50">|</span>
             <span>{files[0].name.replace('.md','').toUpperCase()}</span>
             <span className="opacity-50">|</span>
@@ -313,7 +313,7 @@ const App: React.FC = () => {
                 {/* Dynamic Main Tab Name */}
                 <div className="flex border-b border-amber-900/50">
                     <div className="px-4 py-2 bg-amber-900/30 text-amber-500 font-bold text-xs uppercase flex-1 border-r border-amber-900/50 truncate">
-                        ACTION: {gameState.etape_active}
+                         {gameState.etape_active || 'ATTENTE SCÉNARIO'}
                     </div>
                     <button onClick={toggleIndices} className={`px-4 py-2 text-xs font-bold uppercase border-r border-amber-900/50 hover:bg-amber-900/20 ${viewMode === 'INDICES' ? 'bg-amber-500 text-black' : 'text-amber-500/70'}`}>
                         INDICES (REF)
@@ -362,7 +362,6 @@ const App: React.FC = () => {
             <div className="flex-1 border-retro flex flex-col bg-black p-1 gap-1 overflow-y-auto">
                  <div className="bg-amber-900/20 p-1 text-[10px] text-center mb-2 opacity-60">OUTILS MJ</div>
                  <RetroButton onClick={() => executePrompt("GM_BRIEF", "Brief rapide de la situation.")} label="BRIEF SCÈNE" />
-                 <RetroButton onClick={() => executePrompt("PLAYER_FACING", "Description sensorielle pour les joueurs.")} label="DESCRIPTION" />
                  <RetroButton onClick={() => executePrompt("RAIL_BRIDGES", "3 moyens de ramener les joueurs sur le scénario.")} label="PONTS NARRATIFS" />
             </div>
         </aside>
