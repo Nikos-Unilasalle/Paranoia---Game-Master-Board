@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OmniGM Terminal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              black: '#050505',
+              gray: {
+                900: '#101010',
+                800: '#202020',
+              },
+              amber: {
+                500: '#ffb000', 
+                900: '#332200',
+              }
+            },
+            fontFamily: {
+              mono: ['"Courier New"', 'Courier', 'monospace'],
+            },
+            fontSize: {
+              base: '15px', // Strict 1 font size rule (mostly)
+            }
+          },
+        },
+      }
+    </script>
+    <style>
+      body {
+        background-color: #000;
+        color: #ffb000;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 15px; /* Enforcing single font size base */
+        overflow: hidden;
+      }
+
+      /* CRT Scanline Effect */
+      .crt::before {
+        content: " ";
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+        z-index: 50;
+        background-size: 100% 2px, 3px 100%;
+        pointer-events: none;
+      }
+      
+      /* Subtle Text Glow */
+      .text-glow {
+        text-shadow: 0 0 2px #aa7700;
+      }
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 12px;
+        background: #000;
+        border-left: 1px solid #332200;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #ffb000; 
+        border: 1px solid #000;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #cc8800; 
+      }
+
+      /* Blink Animation for cursors */
+      @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0; }
+      }
+      .blink {
+        animation: blink 1s step-end infinite;
+      }
+
+      /* Utility for strict borders */
+      .border-retro {
+        border: 1px solid #ffb000;
+      }
+      .border-retro-dim {
+        border: 1px solid #553300;
+      }
+      
+      /* Selection styling */
+      ::selection {
+        background: #ffb000;
+        color: #000;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
+    "recharts": "https://aistudiocdn.com/recharts@^3.4.1"
+  }
+}
+</script>
+</head>
+  <body class="crt h-screen w-screen">
+    <div id="root" class="h-full w-full"></div>
+  </body>
+</html>

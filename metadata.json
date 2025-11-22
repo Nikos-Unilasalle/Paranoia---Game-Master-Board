@@ -1,0 +1,5 @@
+{
+  "name": "Paranoia - Game Master Board",
+  "description": "An AI-powered Game Master assistant that ingests Markdown scenarios to provide scene descriptions, options, consequences, and coherent improvisation based on game state.",
+  "requestFramePermissions": []
+}
