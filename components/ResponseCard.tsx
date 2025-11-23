@@ -18,7 +18,7 @@ export const ResponseCard: React.FC<Props> = ({ data, isPlayerMode, language }) 
           <span className="mr-3 opacity-50 select-none w-6 text-right shrink-0 font-mono text-xs pt-0.5">
               {showNumber ? String(idx + 1).padStart(2, '0') : '>'}
           </span>
-          <div className="text-amber-500/90">
+          <div className="text-amber-500/90 flex-1 text-justify pr-12 break-words">
               {item.replace(/\[Improv.*?\]/g, '')}
               {item.includes('[Improv') && !isPlayerMode && (
                   <span className="ml-2 text-[10px] opacity-50 border border-amber-900 text-amber-700 px-1 rounded inline-block align-middle" title="Generated Content">AI</span>
@@ -97,7 +97,7 @@ export const ResponseCard: React.FC<Props> = ({ data, isPlayerMode, language }) 
                             <span className="text-amber-500 font-bold text-sm">{p.name}</span>
                             <span className="text-amber-700 text-xs uppercase font-mono">{p.mutation}</span>
                         </div>
-                        <div className="text-amber-500/70 text-xs mb-2 italic">{p.description_short}</div>
+                        <div className="text-amber-500/70 text-xs mb-2 italic text-justify pr-6">{p.description_short}</div>
                         
                         <div className="grid grid-cols-1 gap-1">
                             <div className="flex gap-2 text-xs">
