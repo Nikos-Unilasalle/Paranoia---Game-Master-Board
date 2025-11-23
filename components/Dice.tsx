@@ -1,9 +1,15 @@
 
 import React, { useState } from 'react';
+import { TRANSLATIONS, LanguageKey } from '../utils/translations';
 
-export const Dice: React.FC = () => {
+interface Props {
+  language: LanguageKey;
+}
+
+export const Dice: React.FC<Props> = ({ language }) => {
   const [value, setValue] = useState<number>(6);
   const [rolling, setRolling] = useState(false);
+  const t = TRANSLATIONS[language];
 
   const roll = () => {
     if (rolling) return;
@@ -31,7 +37,7 @@ export const Dice: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center justify-center h-full w-full select-none cursor-pointer group" onClick={roll}>
-        <div className="text-[10px] text-amber-900 mb-1 uppercase group-hover:text-amber-500">D6_MODULE</div>
+        <div className="text-[10px] text-amber-900 mb-1 uppercase group-hover:text-amber-500">{t.dice_module}</div>
         <div className={`w-12 h-12 border-2 border-amber-500 flex items-center justify-center bg-black relative transition-transform ${rolling ? 'animate-spin' : ''}`}>
             {/* Grid 3x3 for dots */}
             <div className="grid grid-cols-3 grid-rows-3 gap-1 w-8 h-8">
@@ -42,7 +48,7 @@ export const Dice: React.FC = () => {
             {/* Shine effect */}
             <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-white/10 to-transparent pointer-events-none"></div>
         </div>
-        <div className="mt-1 text-amber-500 font-bold text-xs">RESULT: {value}</div>
+        <div className="mt-1 text-amber-500 font-bold text-xs">{t.dice_result}: {value}</div>
     </div>
   );
 };

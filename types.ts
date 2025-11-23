@@ -9,6 +9,7 @@ export interface GameClock {
 
 export interface GameState {
   run_id: string;
+  language: string; // New field for selected language
   etape_active: string | null;
   horloges: GameClock[];
   indices_vus: string[];

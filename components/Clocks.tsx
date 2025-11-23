@@ -1,14 +1,18 @@
+
 import React from 'react';
 import { GameClock } from '../types';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { TRANSLATIONS, LanguageKey } from '../utils/translations';
 
 interface ClocksProps {
   clocks: GameClock[];
   onUpdate: (id: string, delta: number) => void;
+  language: LanguageKey;
 }
 
-export const Clocks: React.FC<ClocksProps> = ({ clocks, onUpdate }) => {
-  if (clocks.length === 0) return <div className="text-amber-900 text-xs p-2">NO_ACTIVE_MONITORS</div>;
+export const Clocks: React.FC<ClocksProps> = ({ clocks, onUpdate, language }) => {
+  const t = TRANSLATIONS[language];
+  if (clocks.length === 0) return <div className="text-amber-900 text-xs p-2">{t.no_monitors}</div>;
 
   return (
     <div className="space-y-4">

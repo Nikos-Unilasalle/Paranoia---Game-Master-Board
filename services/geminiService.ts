@@ -47,6 +47,9 @@ class GeminiService {
       ### ÉTAT DE LA PARTIE:
       ${stateStr}
 
+      ### LANGUE DE SORTIE REQUISE:
+      ${state.language || 'Français'} (Tu DOIS répondre dans cette langue).
+
       ### REQUÊTE UTILISATEUR:
       ${query}
       
